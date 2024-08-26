@@ -1,82 +1,24 @@
 trigger:
-  branches:
-    include:
-      - main
+- main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
 
 steps:
-<<<<<<< HEAD
-# Install NuGet tool
 - task: NuGetToolInstaller@1
-
-# Restore NuGet packages
-- task: NuGetCommand@2
-=======
-- task: UseDotNet@2
->>>>>>> b1680752b6cc7a3add68ba1ebcd7732d5d1ec369
   inputs:
-    packageType: 'sdk'
-    version: '8.x'
-    installationPath: $(Agent.ToolsDirectory)/dotnet
+    versionSpec: 'latest'
 
-<<<<<<< HEAD
-# Build the solution
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
 - task: VSBuild@1
   inputs:
     solution: '$(solution)'
     msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-
-# Run tests
-- task: VSTest@2
-  inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-
-# Prepare SonarCloud analysis
-- task: SonarCloudPrepare@1
-  inputs:
-    SonarCloud: 'SonarCloud service connection'
-    organization: 'your-organization'
-    scannerMode: 'MSBuild'
-    projectKey: 'PlanetWeight'
-    projectName: 'PlanetWeight'
-    extraProperties: |
-      sonar.exclusions=**/*.test.cs
-
-# Run SonarCloud analysis
-- task: SonarCloudAnalyze@1
-
-# Publish SonarCloud analysis results
-- task: SonarCloudPublish@1
-  inputs:
-    pollingTimeoutSec: '300'
-=======
-- script: dotnet restore
-  displayName: 'Restore dependencies'
-
-- script: dotnet build --configuration Release
-  displayName: 'Build project'
-
-- script: dotnet test --no-build --configuration Release --logger trx
-  displayName: 'Run unit tests'
-
-- task: CodeAnalysis@0
-  inputs:
-    # Assuming you have SonarQube or another code analysis tool integrated
-    projectKey: 'YourProjectKey'
-    projectName: 'YourProjectName'
-    projectVersion: '1.0'
-    sonarQubeEndpoint: 'YourSonarQubeService'
-    configMode: 'manual'
-    configFile: 'sonar-project.properties'
-    additionalOptions: '-Dsonar.exclusions=**/Test/*.cs'
-
-- task: PublishTestResults@2
-  inputs:
-    testResultsFiles: '**/*.trx'
-    testRunTitle: 'Publish Test Results'
->>>>>>> b1680752b6cc7a3add68ba1ebcd7732d5d1ec369

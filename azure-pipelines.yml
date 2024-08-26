@@ -1,34 +1,39 @@
-# ASP.NET
-# Build and test ASP.NET projects.
-# Add steps that publish symbols, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
-
 trigger:
-- main
+  branches:
+    include:
+      - main
 
 pool:
-  vmImage: 'windows-latest'
-
-variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
+  vmImage: 'ubuntu-latest'
 
 steps:
-- task: NuGetToolInstaller@1
-
-- task: NuGetCommand@2
+- task: UseDotNet@2
   inputs:
-    restoreSolution: '$(solution)'
+    packageType: 'sdk'
+    version: '8.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
 
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+- script: dotnet restore
+  displayName: 'Restore dependencies'
 
-- task: VSTest@2
+- script: dotnet build --configuration Release
+  displayName: 'Build project'
+
+- script: dotnet test --no-build --configuration Release --logger trx
+  displayName: 'Run unit tests'
+
+- task: CodeAnalysis@0
   inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    # Assuming you have SonarQube or another code analysis tool integrated
+    projectKey: 'YourProjectKey'
+    projectName: 'YourProjectName'
+    projectVersion: '1.0'
+    sonarQubeEndpoint: 'YourSonarQubeService'
+    configMode: 'manual'
+    configFile: 'sonar-project.properties'
+    additionalOptions: '-Dsonar.exclusions=**/Test/*.cs'
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFiles: '**/*.trx'
+    testRunTitle: 'Publish Test Results'

@@ -10,22 +10,29 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
+# Install NuGet tool
 - task: NuGetToolInstaller@1
 
+# Restore NuGet packages
 - task: NuGetCommand@2
   inputs:
     restoreSolution: '$(solution)'
 
+# Build the solution
 - task: VSBuild@1
   inputs:
     solution: '$(solution)'
     msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
 
+# Run tests
 - task: VSTest@2
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
+# Prepare SonarCloud analysis
 - task: SonarCloudPrepare@1
   inputs:
     SonarCloud: 'SonarCloud service connection'
@@ -36,8 +43,10 @@ steps:
     extraProperties: |
       sonar.exclusions=**/*.test.cs
 
+# Run SonarCloud analysis
 - task: SonarCloudAnalyze@1
 
+# Publish SonarCloud analysis results
 - task: SonarCloudPublish@1
   inputs:
     pollingTimeoutSec: '300'

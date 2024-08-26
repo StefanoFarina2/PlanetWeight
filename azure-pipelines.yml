@@ -1,23 +1,27 @@
 trigger:
-- main
+  branches:
+    include:
+      - main
 
 pool:
-  vmImage: 'windows-latest'
-
-variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
+  vmImage: 'ubuntu-latest'
 
 steps:
+<<<<<<< HEAD
 # Install NuGet tool
 - task: NuGetToolInstaller@1
 
 # Restore NuGet packages
 - task: NuGetCommand@2
+=======
+- task: UseDotNet@2
+>>>>>>> b1680752b6cc7a3add68ba1ebcd7732d5d1ec369
   inputs:
-    restoreSolution: '$(solution)'
+    packageType: 'sdk'
+    version: '8.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
 
+<<<<<<< HEAD
 # Build the solution
 - task: VSBuild@1
   inputs:
@@ -50,3 +54,29 @@ steps:
 - task: SonarCloudPublish@1
   inputs:
     pollingTimeoutSec: '300'
+=======
+- script: dotnet restore
+  displayName: 'Restore dependencies'
+
+- script: dotnet build --configuration Release
+  displayName: 'Build project'
+
+- script: dotnet test --no-build --configuration Release --logger trx
+  displayName: 'Run unit tests'
+
+- task: CodeAnalysis@0
+  inputs:
+    # Assuming you have SonarQube or another code analysis tool integrated
+    projectKey: 'YourProjectKey'
+    projectName: 'YourProjectName'
+    projectVersion: '1.0'
+    sonarQubeEndpoint: 'YourSonarQubeService'
+    configMode: 'manual'
+    configFile: 'sonar-project.properties'
+    additionalOptions: '-Dsonar.exclusions=**/Test/*.cs'
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFiles: '**/*.trx'
+    testRunTitle: 'Publish Test Results'
+>>>>>>> b1680752b6cc7a3add68ba1ebcd7732d5d1ec369
